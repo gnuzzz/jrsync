@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladimir Kornyshev {@literal <vkornyshev@at-consulting.ru>}
@@ -61,6 +64,32 @@ public final class ClassUtils {
 
     public static String fileName(String className) {
         return className.replace('.', File.separatorChar) + ".class";
+    }
+
+    public static Map<File, String> existingClasses(List<String> roots) {
+        Map<File, String> ret = new HashMap<>();
+        roots.stream().map(File::new).forEach(r -> ret.put(r, existingClass(r, r)));
+        return ret;
+    }
+
+    public static String existingClass(File root, File dir) {
+        File[] files = dir.listFiles();
+        if (files == null) return null;
+        String className = null;
+        for (File file: files) {
+            if (!file.isDirectory()) {
+                if (file.getName().endsWith(".class")) {
+                    className = className(root, file);
+                    break;
+                }
+            } else {
+                className = existingClass(root, file);
+                if (className != null) {
+                    break;
+                }
+            }
+        }
+        return className;
     }
 
 }

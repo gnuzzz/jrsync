@@ -15,7 +15,7 @@ public class LocalEventHandler implements EventHandler {
     }
 
     @Override
-    public void addClass(String className, byte[] classContent) {
+    public void addClass(String existingClassName, String className, byte[] classContent) {
         System.out.println("Class " + className + " created");
     }
 

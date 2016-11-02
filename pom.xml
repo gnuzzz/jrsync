@@ -11,6 +11,13 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.zeroturnaround</groupId>
+      <artifactId>jr-sdk</artifactId>
+      <version>6.5.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.7</version>
@@ -28,6 +35,7 @@
       <version>4.9</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>

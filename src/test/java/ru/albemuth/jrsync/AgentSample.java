@@ -5,7 +5,7 @@ package ru.albemuth.jrsync;
  */
 public class AgentSample {
 
-    //-javaagent:D:\Vovan\lang\albemuth\jrsync\target\jrsync-0.0.1-SNAPSHOT.jar=classpath=D:\Vovan\lang\albemuth\jrsync\data;port=1111
+    //-javaagent:target\jrsync-0.0.1-SNAPSHOT.jar=handler=ru.albemuth.jrsync.watcher.RemoteFileSystemEventHandler;classpath=data;port=1111
     public static void main(String[] args) {
         for (; true; ) {
             synchronized (AgentSample.class) {

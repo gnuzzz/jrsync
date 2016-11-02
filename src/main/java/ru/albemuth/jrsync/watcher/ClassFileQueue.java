@@ -10,24 +10,25 @@ import java.util.PriorityQueue;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static ru.albemuth.jrsync.watcher.ClassUtils.readClassContent;
 
 /**
  * @author vovan
  */
-public class ClassFileWatcher implements Runnable {
+public class ClassFileQueue implements Runnable {
 
     private EventHandler eventHandler;
-    private long period;
-    private long threshhold;
+    private long updatePeriod;
+    private long maxQueuePeriod;
+    private Map<File, String> existingClasses;
     private boolean running;
     private PriorityQueue<ClassFile> filesQueue;
     private Map<ClassFileKey, ClassFile> filesMap;
 
-    public ClassFileWatcher(EventHandler eventHandler, long period, long threshhold) {
+    public ClassFileQueue(EventHandler eventHandler, long updatePeriod, long maxQueuePeriod, Map<File, String> existingClasses) {
         this.eventHandler = eventHandler;
-        this.period = period;
-        this.threshhold = threshhold;
+        this.updatePeriod = updatePeriod;
+        this.maxQueuePeriod = maxQueuePeriod;
+        this.existingClasses = existingClasses;
         this.filesQueue = new PriorityQueue<>();
         this.filesMap = new HashMap<>();
     }
@@ -52,20 +53,20 @@ public class ClassFileWatcher implements Runnable {
             waitForUpdates();
             if (!running) break;
 
-            while (processOldestClassFile()) {
+            while (processNextClassFile()) {
                 //do nothing
             }
         }
     }
 
-    private synchronized boolean processOldestClassFile() {
+    private synchronized boolean processNextClassFile() {
         if (filesQueue.isEmpty()) return false;
         ClassFile classFile = filesQueue.peek();
         if (!classFile.isExpired()) return false;
         try {
             String classname = ClassUtils.className(classFile.root, classFile.file);
             if (classFile.action == ENTRY_CREATE) {
-                eventHandler.addClass(classname, ClassUtils.readClassContent(classFile.file));
+                eventHandler.addClass(existingClasses.get(classFile.root), classname, ClassUtils.readClassContent(classFile.file));
             } else if (classFile.action == ENTRY_MODIFY) {
                 eventHandler.modifyClass(classname, ClassUtils.readClassContent(classFile.file));
             } else if (classFile.action == ENTRY_DELETE) {
@@ -84,13 +85,13 @@ public class ClassFileWatcher implements Runnable {
         ClassFileKey key = new ClassFileKey(root, file);
         ClassFile classFile = filesMap.get(key);
         if (classFile == null) {
-            classFile = new ClassFile(root, file, action, System.currentTimeMillis() + threshhold);
+            classFile = new ClassFile(root, file, action, System.currentTimeMillis() + maxQueuePeriod);
             filesMap.put(key, classFile);
             filesQueue.add(classFile);
         } else {
             try {
                 classFile.action = getAction(classFile.action, action);
-                classFile.expires = System.currentTimeMillis() + threshhold;
+                classFile.expires = System.currentTimeMillis() + maxQueuePeriod;
             } catch (IllegalStateException e) {
                 e.printStackTrace();
                 classFile.action = null; //this removes classFile from queue on next iteration
@@ -111,7 +112,7 @@ public class ClassFileWatcher implements Runnable {
 
     private synchronized void waitForUpdates() {
         try {
-            wait(period);
+            wait(updatePeriod);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

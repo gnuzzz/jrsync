@@ -11,17 +11,19 @@ public abstract class Event implements Serializable {
 
     public static class Add extends Event {
 
+        private final String existingClassName;
         private final String className;
         private final byte[] classContent;
 
-        public Add(String className, byte[] classContent) {
+        public Add(String existingClassName, String className, byte[] classContent) {
+            this.existingClassName = existingClassName;
             this.className = className;
             this.classContent = classContent;
         }
 
         @Override
         public void apply(EventHandler handler) {
-            handler.addClass(className, classContent);
+            handler.addClass(existingClassName, className, classContent);
         }
     }
 

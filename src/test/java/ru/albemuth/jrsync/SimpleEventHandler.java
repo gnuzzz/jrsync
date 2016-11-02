@@ -12,7 +12,7 @@ public class SimpleEventHandler implements EventHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEventHandler.class);
 
     @Override
-    public void addClass(String className, byte[] classContent) {
+    public void addClass(String existingClassName, String className, byte[] classContent) {
         LOGGER.info("Class {} created", className);
     }
 

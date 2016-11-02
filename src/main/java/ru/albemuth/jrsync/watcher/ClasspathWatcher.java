@@ -23,14 +23,14 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
  */
 public class ClasspathWatcher implements Runnable {
 
-    private ClassFileWatcher classFileWatcher;
+    private ClassFileQueue classFileQueue;
     private List<File> classpath;
     private long period;
     private boolean running;
     private Map<File, WatchDir> dirs;
 
-    public ClasspathWatcher(ClassFileWatcher classFileWatcher, List<String> rootNames, long period) {
-        this.classFileWatcher = classFileWatcher;
+    public ClasspathWatcher(ClassFileQueue classFileQueue, List<String> rootNames, long period) {
+        this.classFileQueue = classFileQueue;
         this.classpath = rootNames.stream().map(File::new).collect(Collectors.toList());
         this.period = period;
         this.dirs = new HashMap<>();
@@ -47,7 +47,6 @@ public class ClasspathWatcher implements Runnable {
 
             for (; running; ) {
                 WatchKey key = watcher.poll(period, TimeUnit.MILLISECONDS);
-//System.out.println("next iteration");
                 if (!running) break;
                 if (key == null) continue;
 
@@ -75,11 +74,11 @@ public class ClasspathWatcher implements Runnable {
                         }
                     } else {
                         if (kind == ENTRY_CREATE) {
-                            classFileWatcher.classFileCreated(wd.root, file);
+                            classFileQueue.classFileCreated(wd.root, file);
                         } else if (kind == ENTRY_MODIFY) {
-                            classFileWatcher.classFileModified(wd.root, file);
+                            classFileQueue.classFileModified(wd.root, file);
                         } else if (kind == ENTRY_DELETE) {
-                            classFileWatcher.classFileDeleted(wd.root, file);
+                            classFileQueue.classFileDeleted(wd.root, file);
                         }
                     }
                 }
@@ -117,7 +116,7 @@ public class ClasspathWatcher implements Runnable {
             if (file.isDirectory()) {
                 addDir(watcher, root, file, addFiles);
             } else if (addFiles) {
-                classFileWatcher.classFileCreated(root, file);
+                classFileQueue.classFileCreated(root, file);
             }
         }
     }
@@ -132,7 +131,7 @@ public class ClasspathWatcher implements Runnable {
             if (file.isDirectory()) {
                 removeDir(file);
             } else {
-                classFileWatcher.classFileDeleted(wd.root, file);
+                classFileQueue.classFileDeleted(wd.root, file);
             }
         }
     }
